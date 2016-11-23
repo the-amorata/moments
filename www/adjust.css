@@ -1,0 +1,57 @@
+/*.h1, h1 {
+    font-size: 48px;
+}*/
+
+@font-face {
+  font-family: "PlutoSansW01";
+  src: url("pluto-sans/Pluto_Sans_W01_Regular.ttf");
+}
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  /*font-family: Futura, Arial, sans-serif;*/
+  font-family: "PlutoSansW01";
+  font-weight: 500;
+  line-height: 1.1;
+  /*color: inherit;*/
+  color: #1c1d1d;
+}
+
+label {
+  font-family: Futura, Arial, sans-serif;
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 5px;
+  font-weight: 700;
+  color: #1c1d1d;
+}
+
+button, input, select, textarea {
+  font-family: Futura, Arial, sans-serif;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.selectize-dropdown, .selectize-input, .selectize-input input {
+  color: #333333;
+  font-family: Futura, Arial, sans-serif;
+  font-size: inherit;
+  line-height: 20px;
+  -webkit-font-smoothing: inherit;
+}
+
+body {
+  font-family: Futura, Arial, sans-serif;
+  color: #1c1d1d;
+}
+
+#order.btn-default {
+    color: #fff;
+    background-color: #1b87e0;
+    border-color: #1b87e0;
+    width: 100%;
+}
+
+a {
+    /*color: #337ab7;*/
+    color: #1b87e0;
+}
