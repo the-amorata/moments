@@ -50,15 +50,16 @@ function(input, output, session) {
   output$button <- renderUI({
     validate(need(input$ss != '', 'choose a shirt size'))
     validate(need(input$sc != '', 'choose a shirt color'))
+    validate(need(input$gs != '', 'choose a graphic size'))
     actionButton('order', "PROCEED TO CHECKOUT")
   })
   
   onclick("order", {
-    fn = paste0(Sys.time(), '.png')
+    fn = paste0(mk_filename(orbit_plot()), '.png')
     ggsave(fn, plot = orbit_plot(), 
            bg = 'transparent', width = 11, height = 11, units = 'in', 
            path = '~/apps/moments/plots/')
-    js$order(mk_url(fn, input$ss, input$sc))
+    js$order(mk_url(fn, input$ss, input$sc, input$gs))
   })
 
 }

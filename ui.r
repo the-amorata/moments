@@ -2,6 +2,7 @@ source("~/apps//moments/util.r")
 
 shirt_sizes  = c('xs','s','m', 'l', 'xxl', 'xxxl')
 shirt_colors = c('creme', 'summer peach', 'light blue')
+graphic_sizes = c('2.5"x2.5"', '7"x7"')
 
 jsCode <- "
   shinyjs.order = function(params) {
@@ -19,7 +20,7 @@ fluidPage(
   
   fluidRow(
     column(6, align = 'center', offset = 3,
-           h1("MOMENTS"),
+           h1("M O M E N T S"),
            p('see where the earth was on its journey around the sun.
               input up to six meaningful dates then personalize the labels and colors 
              (we left you a few examples).'))
@@ -60,6 +61,12 @@ fluidPage(
                      choices = shirt_colors,
                      options = list(
                        placeholder = 'shirt color',
+                       onInitialize = I('function() { this.setValue(""); }'))),
+      selectizeInput(inputId = 'gs', 
+                     label = NULL, 
+                     choices = graphic_sizes,
+                     options = list(
+                       placeholder = 'graphic size',
                        onInitialize = I('function() { this.setValue(""); }')))
     ),
     fluidRow(
