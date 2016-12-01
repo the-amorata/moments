@@ -124,6 +124,23 @@ orbit_theme <- theme(
 ,axis.ticks = element_blank()
 )
 
+sample_ligtbox <- function() {
+  c('creme', 'summer peach', 'light blue')
+  tags$div(
+    fluidRow(
+      column(4, align = 'center',
+             h4('creme'),
+             img(src = 'moments-creme.jpg', height = '260px')),
+      column(4, align = 'center', 
+             h4('summer peach'),
+             img(src = 'moments-peach.jpg', height = '260px')),
+      column(4, align = 'center',
+             h4('light blue'),
+             img(src = 'moments-blue.jpg', height = '260px'))
+    )
+  )
+}
+
 # post_lo_dev <- function(lo) {
 #   url = 'https://api.theprintful.com/'
 #   auth = 'pqvcg9mn-wiba-zsf3:cqck-e8jm47b38zlj'

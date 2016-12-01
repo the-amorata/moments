@@ -54,6 +54,15 @@ function(input, output, session) {
     actionButton('order', "PROCEED TO CHECKOUT")
   })
   
+  observeEvent(input$example, {
+    showModal(modalDialog(
+      title = "samples",
+      sample_ligtbox(),
+      easyClose = TRUE,
+      size = 'l'
+    ))
+  }) 
+  
   onclick("order", {
     fn = paste0(mk_filename(orbit_plot()), '.png')
     ggsave(fn, plot = orbit_plot(), 
