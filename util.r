@@ -19,9 +19,9 @@ mk_filename <- function(data) {
   sprintf("%s_%s", as.integer(Sys.time()), digest::digest(data))
 }
 
-mk_url <- function(img_file, ss, sc, gs) {
-  url_base = 'http://amorata.myshopify.com/cart/22746124421:1?'
-  file_base = 'http://amorata-dev.com:8787/files/apps/moments/plots/'
+mk_url <- function(img_file, ss, sc, gs, q) {
+  url_base = paste0('http://amorata.myshopify.com/cart/22746124421:', q, '?')
+  file_base = 'http://amorata-apps.com:8787/files/apps/moments/plots/'
   
   img_attr = paste0('attributes[img-file]=', file_base, img_file)
   ss_attr = paste0('attributes[shirt-size]=', ss)

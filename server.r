@@ -68,7 +68,7 @@ function(input, output, session) {
     ggsave(fn, plot = orbit_plot(), 
            bg = 'transparent', width = 11, height = 11, units = 'in', 
            path = '~/apps/moments/plots/')
-    js$order(mk_url(fn, input$ss, input$sc, input$gs))
+    js$order(mk_url(fn, input$ss, input$sc, input$gs, input$q))
   })
 
 }

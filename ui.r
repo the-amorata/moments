@@ -36,10 +36,17 @@ fluidPage(
   ),   
   fluidRow(column(8, align = 'center', offset = 2,
     column(3, 
-        p('how many moments would you like to plot?'),
-        selectInput('n', NULL, 1:6, 4),
-        checkboxInput('leg', 'labels', TRUE),
-        actionLink('example', 'samples')),
+      p('how many moments would you like to plot?'),
+      selectInput('n', NULL, 1:6, 4),
+      fluidRow(
+        column(6, checkboxInput('leg', 'labels', TRUE)),
+        column(6, actionLink('example', 'samples'))
+      ),
+      fluidRow(
+        column(6, align = 'center', div(id = 'qlab', p('quantity'))),
+        column(6, numericInput('q', NULL, 1, min = 1, step = 1))
+      )
+    ),
     column(6,
       ui_row_output(1),
       ui_row_output(2),

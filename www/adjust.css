@@ -55,3 +55,11 @@ a {
     /*color: #337ab7;*/
     color: #1b87e0;
 }
+
+.checkbox {
+  margin-top: 0px;
+}
+
+#qlab {
+  margin-top: 6.5px;
+}
