@@ -1,5 +1,5 @@
 pkgs = c("shiny", "data.table", "ggplot2", "colourpicker", 
-         "RColorBrewer", "extrafont", "shinyjs")
+         "RColorBrewer", "extrafont", "shinyjs", 'shinyBS')
 invisible(lapply(pkgs, library, character.only = TRUE)); rm(pkgs)
 
 ### Important Constants
@@ -15,20 +15,17 @@ lab_cat <- function(x) trim(gsub('\n$', '', paste(x, collapse = '\n')))
 valid_date <- function(m,d) as.Date(paste('2000', m, d, sep='-'))
 
 mk_filename <- function(data) {
-# Sys.time() <- as.POSIXct(as.integer(Sys.time()), origin="1970-01-01")
   sprintf("%s_%s", as.integer(Sys.time()), digest::digest(data))
 }
 
-mk_url <- function(img_file, ss, sc, gs, q) {
+mk_url <- function(img_file, order_details, q, gs) {
   url_base = paste0('http://amorata.myshopify.com/cart/22746124421:', q, '?')
   file_base = 'http://amorata-apps.com:8787/files/apps/moments/plots/'
   
   img_attr = paste0('attributes[img-file]=', file_base, img_file)
-  ss_attr = paste0('attributes[shirt-size]=', ss)
-  sc_attr = paste0('attributes[shirt-color]=', sc)
-  gs_attr = paste0('attributes[graphic-size]=', gs)
-  
-  all_attr = paste(img_attr, ss_attr, sc_attr, gs_attr, sep = '&')
+  gs_attr  = paste0('attributes[graphic-size]=', gs)
+  od_attr  = paste0('attributes[order-details]=', paste(order_details,  collapse = ' '))
+  all_attr = paste(img_attr, gs_attr, od_attr, sep = '&')
   
   paste0(url_base, all_attr)
 }
@@ -141,67 +138,59 @@ sample_ligtbox <- function() {
   )
 }
 
-# post_lo_dev <- function(lo) {
-#   url = 'https://api.theprintful.com/'
-#   auth = 'pqvcg9mn-wiba-zsf3:cqck-e8jm47b38zlj'
-#   contype = 'application/json; charset=utf-8'
-#   rv = httr::POST(url,
-#                   body = lo,
-#                   httr::add_headers('Authorization' = auth),
-#                   encode = 'json')
-#   rv
-# }
+render_detail_row <- function(i) {
+  shirt_sizes  = c('xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl')
+  shirt_colors = c('creme', 'summer peach', 'light blue')
+  
+  renderUI({
+    fluidRow(
+      column(4, selInput(paste0('shirt_color', i), shirt_colors, 'shirt color')),
+      column(4, selInput(paste0('shirt_size', i), shirt_sizes, 'shirt size')),
+      column(4, numericInput(paste0('q',i), NULL, 1, 1, step = 1))
+    )
+  })
+}
 
-# BLUE
-# 64a3ed 
-# 
-# CORAL
-# e88e7c 
-# 
-# MINT
-# 7ec49f 
-# 
-# ORANGE
-# ef8d65 
-# 
-# PURPLE
-# a688ba 
-# 
-# YELLOW
-# f4de5b 
+selInput <- function(inputId, choices, placeholder) {
+  selectizeInput(inputId = inputId, 
+                 label = NULL, 
+                 choices = choices,
+                 options = list(
+                   placeholder = placeholder,
+                   onInitialize = I('function() { this.setValue(""); }')))
+}
 
-# gen_mockup <- function() {
-#   img <- png::readPNG('~/apps/moments/white_mockup.png')
-#   manual_cols = c('#6784A9','#96CDC2','#F58C8D','#BC94C1','#C27186','#E7D49F')
-#   manual_dates = c('2016-12-25', '2016-04-22', '1989-05-14', 
-#                    '1990-12-16', '2016-07-04', '2016-10-02')
-#   manual_labs = c('christmas', 'earth day', 'your birthday', 
-#                   'my birthday', 'moment #5', 'moment #6')
-#   dt = data.table(olab = manual_labs, bday = manual_dates, hex = manual_cols)
-#   dt[,lab := lab_cat(olab), by = hex][,hl := paste(hex, lab)]
-#   dt = day_xy(dt)
-#   uhl = unique(dt[,.(hex, lab)])
-#   hf = factor(dt[,hl], levels = dt[,hl])
-#   leg_ncol = ifelse(nrow(uhl) < 4, 1, ifelse(nrow(uhl) > 4, 3, 2))
-#   # if (leg == TRUE) {leg_val = 'bottom'} else {leg_val = 'none'}
-#   leg_val = 'bottom'
-#   ref = mk_ref_dt()
-#   params = list(ps1=40, ps2=12, fs=35, lt=3.5, lm=0.5, lk=5)
-#   
-#   ggplot() + 
-#     geom_path(data = ref, aes(x = x, y = y), linetype = 1) +
-#     geom_point(data = dt, aes(x = x, y = y, color = hf)) +
-#     scale_color_manual(values = uhl[,hex], labels = uhl[,lab]) +
-#     guides(colour = guide_legend(override.aes = list(alpha = 1), ncol = leg_ncol)) +
-#     orbit_theme +
-#     theme(
-#       # legend.margin = unit(params$lm, "line")
-#       # ,legend.key.height = unit(params$lk, "line")
-#       # ,legend.key.width = unit(params$lk, "line")
-#       legend.position = leg_val
-#       ,text = element_text(family = 'Futura Lt BT')
-#     ) + coord_fixed() + 
-#     annotation_custom(grid::rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
-#                       -Inf, Inf, -Inf, Inf) +
-#     xlim(-600,600) + ylim(-800,400)
-# }
+# http://stackoverflow.com/questions/35783446/can-you-have-an-image-as-a-radiobutton-choice-in-shiny
+radioButtons_withHTML <- function (inputId, label, choices, selected = NULL, inline = FALSE, width = NULL) {
+  choices <- shiny:::choicesWithNames(choices)
+  selected <- if (is.null(selected)) 
+    choices[[1]]
+  else {
+    shiny:::validateSelected(selected, choices, inputId)
+  }
+  if (length(selected) > 1) 
+    stop("The 'selected' argument must be of length 1")
+  options <- generateOptions_withHTML(inputId, choices, selected, inline, type = "radio")
+  divClass <- "form-group shiny-input-radiogroup shiny-input-container"
+  if (inline) 
+    divClass <- paste(divClass, "shiny-input-container-inline")
+  tags$div(id = inputId, style = if (!is.null(width)) 
+    paste0("width: ", validateCssUnit(width), ";"), class = divClass, 
+    shiny:::controlLabel(inputId, label), options)
+}
+
+generateOptions_withHTML <- function (inputId, choices, selected, inline, type = "checkbox") {
+  options <- mapply(choices, names(choices), FUN = function(value, name) {
+    inputTag <- tags$input(type = type, name = inputId, value = value)
+    if (value %in% selected) 
+      inputTag$attribs$checked <- "checked"
+    if (inline) {
+      tags$label(class = paste0(type, "-inline"), inputTag, 
+                 tags$span(HTML(name)))
+    }
+    else {
+      tags$div(class = type, tags$label(inputTag, tags$span(HTML(name))))
+    }
+  }, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+  div(class = "shiny-options-group", options)
+}
