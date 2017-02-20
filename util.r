@@ -18,8 +18,8 @@ mk_filename <- function(data) {
   sprintf("%s_%s", as.integer(Sys.time()), digest::digest(data))
 }
 
-mk_url <- function(img_file, order_details, q, gs) {
-  url_base = paste0('http://amorata.myshopify.com/cart/22746124421:', q, '?')
+mk_url <- function(img_file, order_details, id, q, gs) {
+  url_base = paste0('http://amorata.myshopify.com/cart/', id, ':', q, '?')
   file_base = 'http://amorata-apps.com:8787/files/apps/moments/plots/'
   
   img_attr = paste0('attributes[img-file]=', file_base, img_file)
@@ -32,7 +32,7 @@ mk_url <- function(img_file, order_details, q, gs) {
 
 day_xy <- function(dt) {
   a = 149.6; b = 149.579116
-  dt[,poty := doty(bday)/365]
+  dt[,poty := doty(date)/365]
   dt[,x :=  a*sin(2*pi*poty - pi/2)]
   dt[,y := -b*sin(2*pi*poty)]
 }
@@ -45,32 +45,19 @@ mk_ref_dt <- function(i = 100) {
 
 render_ui_row <- function(i) {
   
-  old_cols = c('#6784A9','#96CDC2','#F58C8D','#BC94C1','#C27186','#E7D49F')
-  display_cols = c('#1b87e0', '#ed635f', '#6abf90', '#ff814a', '#8369a8', '#f4de5b' )
-  
   manual_dates = c('2016-12-25', '2016-04-22', '1989-05-14', 
                    '1990-12-16', '2016-07-04', '2016-10-02')
-  manual_labs = c('christmas', 'earth day', 'your birthday', 
-                  'my birthday', 'moment #5', 'moment #6')
   
   renderUI({
     fluidRow(
-      conditionalPanel(condition = "input.leg == true",
-        column(4,
-          textInput(paste0('labs',i), NULL, value = manual_labs[i]))),
-      column(4,
+      column(
+        12,
         dateInput(paste0('date',i),
                   NULL,
                   startview = "year",
                   format = "M d",
-                  value = manual_dates[i])),
-      column(4,
-             colourpicker::colourInput(paste0('cols',i), 
-                                       NULL, 
-                                       palette = 'limited', 
-                                       allowedCols = display_cols,
-                                       showColour = 'background',
-                                       value = display_cols[i]))
+                  value = manual_dates[i])
+      )
     )
   })
 }
@@ -81,31 +68,36 @@ ui_row_output <- function(i) {
   conditionalPanel(condition, fluidRow(column(12,uiOutput(inputid))))
 }
 
-plot_orbit <- function(dt, ref, leg, mobile=FALSE) {
-  fn = paste(Sys.time(), '.png', sep='')
-  uhl = unique(dt[,.(hex, lab)])
-  hf = factor(dt[,hl], levels = dt[,hl])
-  leg_ncol = ifelse(nrow(uhl) < 4, 1, ifelse(nrow(uhl) > 4, 3, 2))
-  if (leg == TRUE) {leg_val = 'bottom'} else {leg_val = 'none'}
-  
-  params = list(ps1=40, ps2=12, fs=35, lt=3.5, lm=0.5, lk=5)
-  # if (mobile == TRUE) {params = lapply(params, function(x) x*(320/400))}
-  
+# set_par <- function(x) {
+#   # if (x != '') par(mar = c(3.5, 0, 0, 0), mgp = c(1.5, 0, 0), bg=NA)
+#   if (x != '') par(mar = c(0, 0, 0, 0), mgp = c(0, 0, 0), bg=NA)
+#   else par(mar = c(0.0, 0, 0, 0), mgp = c(0, 0, 0), bg=NA)
+# }
+# 
+# plotPath <- function(dt, ref, hex) {
+#   set_par('hey now')
+#   plot.new()
+#   plot.window(xlim = c(-160, 160), ylim = c(-160, 160))
+#   polypath(ref[,x], ref[,y], col = NA, border = hex, rule = "winding", lwd = 3.5)
+#   points(dt[,x], dt[,y],
+#          #Label Options
+#          # xlab = rv$lab, cex.lab = 4, axes = FALSE, ylab = '',
+#          xlab = 'hey now', cex.lab = 4,  ylab = '', 
+#          #Text Options
+#          # font.lab = 4, family = 'Futura Md BT', col.lab = rv$hex,
+#          font.lab = 4, family = 'Futura Md BT', col.lab = hex,
+#          #Line Options
+#          # col = rv$hex, nr = nrs('less'), lwd = 10)
+#          col = hex, lwd = 10, xlim = c())
+# }
+
+plot_orbit <- function(dt, ref, hex) {
   p = ggplot() + 
-    geom_path(data = ref, aes(x = x, y = y), size = params$lt, linetype = 1, color = '#4c4c4c') +
-    geom_point(data = dt, aes(x = x, y = y, color = hf), size = params$ps1) +
-    scale_color_manual(values = uhl[,hex], labels = uhl[,lab]) +
-    ylim(-160, 160) + xlim(-160, 160) +
-    guides(colour = guide_legend(override.aes = list(size=params$ps2, alpha = 1), ncol = leg_ncol)) +
-    orbit_theme +
-    theme(
-      legend.margin = unit(params$lm, "line")
-      ,legend.key.height = unit(params$lk, "line")
-      ,legend.key.width = unit(params$lk, "line")
-      ,legend.position = leg_val
-      ,text = element_text(family = 'Futura Lt BT', size = params$fs, color = '#4c4c4c')
-    ) + coord_fixed()
-  p
+    geom_path(data = ref, aes(x = x, y = y), size = 6, linetype = 1, color = hex) +
+    geom_point(data = dt, aes(x = x, y = y), size = 40, color = hex) +
+    ylim(-160, 160) + xlim(-160, 160)
+  if (hex == '#FFFFFF') {p = p + orbit_theme_w} else {p = p + orbit_theme}
+  p + coord_fixed()
 }
 
 orbit_theme <- theme(
@@ -119,36 +111,31 @@ orbit_theme <- theme(
 ,panel.border = element_blank()
 ,axis.text = element_blank()
 ,axis.ticks = element_blank()
+,text = element_blank()
+)
+
+orbit_theme_w <- theme(
+  title = element_blank()
+  ,plot.background = element_rect(fill = "grey")
+  ,panel.background = element_rect(fill = "grey")
+  ,legend.key = element_blank()
+  ,legend.background = element_rect(fill = "grey")
+  ,panel.grid.major = element_blank()
+  ,panel.grid.minor = element_blank()
+  ,panel.border = element_blank()
+  ,axis.text = element_blank()
+  ,axis.ticks = element_blank()
+  ,text = element_blank()
 )
 
 sample_ligtbox <- function() {
-  c('creme', 'summer peach', 'light blue')
   tags$div(
     fluidRow(
-      column(4, align = 'center',
-             h4('creme'),
-             img(src = 'moments-creme.jpg', height = '260px')),
-      column(4, align = 'center', 
-             h4('summer peach'),
-             img(src = 'moments-peach.jpg', height = '260px')),
-      column(4, align = 'center',
-             h4('light blue'),
-             img(src = 'moments-blue.jpg', height = '260px'))
+      lapply(list.files('~/apps/moments/www/samples/'), function(x) {
+        column(4, align = 'center', img(src = paste0('samples/', x), height = '260px'))
+      })
     )
   )
-}
-
-render_detail_row <- function(i) {
-  shirt_sizes  = c('xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl')
-  shirt_colors = c('creme', 'summer peach', 'light blue')
-  
-  renderUI({
-    fluidRow(
-      column(4, selInput(paste0('shirt_color', i), shirt_colors, 'shirt color')),
-      column(4, selInput(paste0('shirt_size', i), shirt_sizes, 'shirt size')),
-      column(4, numericInput(paste0('q',i), NULL, 1, 1, step = 1))
-    )
-  })
 }
 
 selInput <- function(inputId, choices, placeholder) {
@@ -160,8 +147,63 @@ selInput <- function(inputId, choices, placeholder) {
                    onInitialize = I('function() { this.setValue(""); }')))
 }
 
+render_detail_row <- function(i, garment, hex) {
+  shirt_sizes  = switch(garment,
+                        tee = c('xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl'),
+                        hoodie = c('xs', 's', 'm', 'l', 'xl', 'xxl'),
+                        'long-sleeve' = c('s', 'm', 'l', 'xl', 'xxl'))
+  shirt_colors = switch(garment,
+                        tee = c('white', 'ash', 'heather grey', 'black'),
+                        hoodie = c('white', 'heather grey', 'black'),
+                        'long-sleeve' = c('white', 'black'))
+  
+  if (hex == '#FFFFFF') {shirt_colors = shirt_colors[!(shirt_colors %in% c('white',  'ash'))]}
+  if (hex == '#000000') {shirt_colors = shirt_colors[shirt_colors != 'black']}
+  if (hex == '#F4DE5B') {shirt_colors = shirt_colors[shirt_colors != 'white']}
+  
+  renderUI({
+    fluidRow(
+      column(4, selInput(paste0('shirt_color', i), shirt_colors, 'garmet color')),
+      column(4, selInput(paste0('shirt_size', i), shirt_sizes, 'garment size')),
+      column(4, numericInput(paste0('q',i), NULL, 1, 1, step = 1))
+    )
+  })
+}
+
+intro_card <- function(img_file) {
+  bsCollapsePanel(
+    'intro',
+    img(src = img_file, 
+        align = 'center', 
+        width = '100%', 
+        height = 'auto')
+  )
+}
+
+garment_card <- function(inputId, choices) {
+  bsCollapsePanel(
+    'garment type',
+    p('select garment type (tee, hoodie, long sleeve)'),
+    radioButtons_withHTML(inputId, 
+                          NULL, 
+                          choices = choices, 
+                          inline = FALSE)
+  )
+}
+
+image_size_card <- function(inputId, choices) {
+  bsCollapsePanel(
+    'graphic size',
+    p('across the chest (7"x7") or left pocket (2.5"x2.5")'),
+    radioButtons_withHTML(inputId, 
+                          NULL, 
+                          choices = choices, 
+                          inline = FALSE)
+  )
+}
+
 # http://stackoverflow.com/questions/35783446/can-you-have-an-image-as-a-radiobutton-choice-in-shiny
-radioButtons_withHTML <- function (inputId, label, choices, selected = NULL, inline = FALSE, width = NULL) {
+radioButtons_withHTML <- function (inputId, label, choices, selected = NULL, inline = TRUE, width = NULL) {
   choices <- shiny:::choicesWithNames(choices)
   selected <- if (is.null(selected)) 
     choices[[1]]

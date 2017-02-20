@@ -1,31 +1,28 @@
-source("~/apps//moments/util.r")     
-
+source("~/apps/moments/util.r")
+  
 ref = mk_ref_dt()
- 
-function(input, output, session) {     
+ids = c('22746124421', '24373251717', '24373322885')
+
+function(input, output, session) {  
 
   lapply(1:6, function(i) {output[[paste0('r',i)]] <- render_ui_row(i)})
   
   df <- reactive({
+    req(input$n)
+    req(input[[paste0('date', input$n)]])
     x = lapply(1:input$n, function(i) {
-      l = paste0('labs',i); b = paste0('date',i); h = paste0('cols',i)
-      data.table(olab = input[[l]], 
-                 bday = as.character(input[[b]]),
-                 hex  = input[[h]]) 
+      data.table(date = as.character(input[[paste0('date',i)]])) 
     })
-    rv = rbindlist(x)[,lab := lab_cat(olab), by = hex][,hl := paste(hex, lab)]
-    unique(rv)
+    unique(rbindlist(x))
   })
   
   rv = reactiveValues(mobile = NULL)
   observe({rv$mobile = session$clientData$output_orbit_width < 400})
   
   orbit_plot <- reactive({
-    validate(need(!is.null(input$labs1), ''))
     validate(need(df(), ''))
     x = day_xy(df())
-    # plot_orbit(x, ref, input$leg, input$ps1, input$ps2, input$fs, input$lt, input$lm, input$lk)
-    plot_orbit(x, ref, input$leg, rv$mobile)
+    plot_orbit(x, ref, input$hex)
   })
   
   output$orbit <- renderImage({
@@ -52,7 +49,7 @@ function(input, output, session) {
   observeEvent(input$rm_btn, {if (counter$n > 1) counter$n <- counter$n - 1})
   
   output$details <- renderUI({
-    lapply(seq_len(counter$n), function(i) render_detail_row(i))
+    lapply(seq_len(counter$n), function(i) render_detail_row(i, input$garment, input$hex))
   })
   
   order_details <- reactive({
@@ -76,21 +73,28 @@ function(input, output, session) {
   # output$an_test <- renderPrint({no_null_details()})
   
   output$details_card <- renderUI({
+    validate(need(orbit_plot(), 'create image'))
+    validate(need(input$garment, 'choose garment size'))
+    validate(need(input$image_size, 'choose image size'))
     fluidRow(
-      p('select shirt color, size, and quantity'),
-      column(3,
-        fluidRow(
-          column(6, actionButton('add_btn', NULL, icon = icon('plus'), width = '100%')),
-          column(6, actionButton('rm_btn', NULL, icon = icon('minus'),  width = '100%'))
+      p('select color, size, and quantity'),
+      fluidRow(
+        column(8, offset = 2,
+          uiOutput('details'),
+          p('want this in another size or color?'),
+          fluidRow(
+            column(6, actionButton('add_btn', NULL, icon = icon('plus'), width = '50%')),
+            column(6, actionButton('rm_btn', NULL, icon = icon('minus'), width = '50%'))
+          )
         )
       ),
-      column(9, uiOutput('details')),
+      hr(),
       fluidRow(
         column(6, offset = 3,
           fluidRow(
             column(4, actionLink('example', 'samples')),
-            column(4, a('size guide', href = 'https://www.amoratadesigns.com/pages/size-guide', target = '_blank')),
-            column(4, a('bundles', href = 'https://www.amoratadesigns.com/pages/bundles',  target = '_blank'))
+            column(4, actionLink('size_guide', 'size guide')),
+            column(4, actionLink('bundles', 'bundles'))
           )
         )
       )
@@ -101,6 +105,24 @@ function(input, output, session) {
     showModal(modalDialog(
       title = "samples",
       sample_ligtbox(),
+      easyClose = TRUE,
+      size = 'l'
+    ))
+  })
+  
+  observeEvent(input$size_guide, {
+    showModal(modalDialog(
+      title = "size guide",
+      fluidRow(column(12, align = 'center', img(src = "sizeguide.jpg", width = '80%'))),
+      easyClose = TRUE,
+      size = 'l'
+    ))
+  })
+  
+  observeEvent(input$bundles, {
+    showModal(modalDialog(
+      title = "bundles",
+      fluidRow(column(12, align = 'center', img(src = "discount.jpg", width = '80%'))),
       easyClose = TRUE,
       size = 'l'
     ))
@@ -120,7 +142,8 @@ function(input, output, session) {
   
   output$orbit_confirmation <- renderImage({
     validate(need(orbit_plot(), 'visit create page'))
-    orbit_dim <- ifelse(rv$mobile, 320, 400)
+    mobile = session$clientData$output_orbit_confirmation_width < 400
+    orbit_dim <- ifelse(mobile, 320, 400)
     outfile <- tempfile(fileext='.png')
     
     # Generate a png
@@ -134,17 +157,24 @@ function(input, output, session) {
   }, deleteFile = TRUE)
   
   output$details_summary <- renderTable({
-    y = c(paste(total_quantity(), 'shirts (total)'), order_details())
+    lab = paste0(gsub('_', ' ', input$garment), 's', ' (total)')
+    y = c(paste(total_quantity(), lab), order_details(), input$image_size)
     x = c('order summary:', rep('', length(y) - 1))
     data.table(x = x, y = y)
   }, align = 'cc', colnames = FALSE, bordered = FALSE, striped = FALSE)
   
   output$checkout <- renderUI({
-    validate(need(no_null_details(), 'please fill all fields in step 3'))
+    validate(need(orbit_plot(), 'visit create page'))
+    validate(need(no_null_details(), 'please fill all fields in "details"'))
     fluidRow(
-      em('heads up, what you see here will be printed. what do you want to do?'),
-      imageOutput('orbit_confirmation', height = 'auto', width = '60%'),
-      br(),
+      fluidRow(
+        column(8, offset = 2, align = 'center',
+          em('heads up, what you see here will be printed.'),
+          br(),
+          em('what do you want to do?'),
+          imageOutput('orbit_confirmation', height = 'auto', width = '90%')
+        )
+      ),
       fluidRow(
         tableOutput('details_summary'),
         column(8, offset = 2,
@@ -162,11 +192,12 @@ function(input, output, session) {
     ggsave(fn, plot = orbit_plot(), 
            bg = 'transparent', width = 11, height = 11, units = 'in', 
            path = '~/apps/moments/plots/')
-    js$order(mk_url(fn, order_details(), total_quantity(),  input$image_size))
+    id = ids[which(input$garment == c('tee', 'hoodie', 'long-sleeve'))]
+    js$order(mk_url(fn, order_details(), id, total_quantity(), input$image_size))
   })
   
   observeEvent(input$open_personalize, {
-    updateCollapse(session, 'main', open = '2. create', close = 'review')
+    updateCollapse(session, 'main', open = 'create', close = 'review')
   })
 
 }

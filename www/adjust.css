@@ -1,6 +1,6 @@
-/*.h1, h1 {
+.h1, h1 {
     font-size: 48px;
-}*/
+}
 
 @font-face {
   font-family: "PlutoSansW01";
@@ -71,3 +71,32 @@ a {
 .table>tbody>tr>td {
   border-top: 0px solid #ddd;
 }
+
+.datepicker-months .datepicker-switch {
+  visibility: collapse;
+}
+
+.datepicker-months .next {
+  display: none;
+}
+
+.datepicker-months .prev {
+  display: none;
+}
+
+#garment img {
+  width: 300px;
+}
+
+#image_size img {
+  width: 300px;
+}
+/*
+.panel[value="create"] {
+  background-color: #ddd;
+}
+
+.panel[value="review"] {
+  background-color: #ddd;
+}
+*/
